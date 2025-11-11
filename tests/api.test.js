@@ -1,8 +1,9 @@
 const request = require('supertest');
 const nock = require('nock');
 const express = require('express');
-const path = require('path');
+const cheerio = require('cheerio');
 const { sampleHtmlWithYale } = require('./test-utils');
+const { replaceYaleWithFale } = require('../lib/replaceYaleWithFale');
 
 // Import app but don't let it listen on a port (we'll use supertest for that)
 // Create a test app with the same route handlers
@@ -25,22 +26,25 @@ testApp.post('/fetch', async (req, res) => {
     const html = response.data;
     
     // Use cheerio to parse HTML and selectively replace text content, not URLs
-    const $ = require('cheerio').load(html);
+    const $ = cheerio.load(html);
     
     // Process text nodes in the body
-    $('body *').contents().filter(function() {
-      return this.nodeType === 3; // Text nodes only
-    }).each(function() {
-      // Replace text content but not in URLs or attributes
-      const text = $(this).text();
-      const newText = text.replace(/Yale/g, 'Fale').replace(/yale/g, 'fale');
-      if (text !== newText) {
-        $(this).replaceWith(newText);
-      }
-    });
+    $('body *')
+      .contents()
+      .filter(function() {
+        return this.nodeType === 3; // Text nodes only
+      })
+      .each(function() {
+        // Replace text content but not in URLs or attributes
+        const text = $(this).text();
+        const newText = replaceYaleWithFale(text);
+        if (text !== newText) {
+          $(this).replaceWith(newText);
+        }
+      });
     
     // Process title separately
-    const title = $('title').text().replace(/Yale/g, 'Fale').replace(/yale/g, 'fale');
+    const title = replaceYaleWithFale($('title').text());
     $('title').text(title);
     
     return res.json({ 
