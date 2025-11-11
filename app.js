@@ -5,6 +5,19 @@ const path = require('path');
 const { replaceYaleWithFale } = require('./lib/replaceYaleWithFale');
 
 const app = express();
+const isTestEnv = process.env.NODE_ENV === 'test';
+
+function log(...args) {
+  if (!isTestEnv) {
+    console.log(...args);
+  }
+}
+
+function logError(...args) {
+  if (!isTestEnv) {
+    console.error(...args);
+  }
+}
 
 // Middleware to parse request bodies
 app.use(express.json());
@@ -58,7 +71,7 @@ app.post('/fetch', async (req, res) => {
       originalUrl: url,
     });
   } catch (error) {
-    console.error('Error fetching URL:', error.message);
+    logError('Error fetching URL:', error.message);
     return res.status(500).json({
       error: `Failed to fetch content: ${error.message}`,
     });
@@ -69,7 +82,7 @@ function startServer(port = process.env.PORT || 3001) {
   return new Promise((resolve, reject) => {
     const server = app
       .listen(port, () => {
-        console.log(`Faleproxy server running at http://localhost:${port}`);
+        log(`Faleproxy server running at http://localhost:${port}`);
         resolve(server);
       })
       .on('error', (error) => {
@@ -96,7 +109,7 @@ function stopServer(server) {
 
 if (require.main === module) {
   startServer().catch((error) => {
-    console.error('Failed to start server:', error);
+    logError('Failed to start server:', error);
     process.exitCode = 1;
   });
 }
@@ -105,4 +118,6 @@ module.exports = {
   app,
   startServer,
   stopServer,
+  log,
+  logError,
 };
