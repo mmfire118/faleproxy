@@ -114,10 +114,9 @@ if (require.main === module) {
   });
 }
 
-module.exports = {
-  app,
-  startServer,
-  stopServer,
-  log,
-  logError,
-};
+module.exports = app;
+module.exports.app = app;
+module.exports.startServer = startServer;
+module.exports.stopServer = stopServer;
+module.exports.log = log;
+module.exports.logError = logError;
