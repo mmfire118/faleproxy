@@ -5,7 +5,6 @@ const path = require('path');
 const { replaceYaleWithFale } = require('./lib/replaceYaleWithFale');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
 
 // Middleware to parse request bodies
 app.use(express.json());
@@ -21,7 +20,7 @@ app.get('/', (req, res) => {
 app.post('/fetch', async (req, res) => {
   try {
     const { url } = req.body;
-    
+
     if (!url) {
       return res.status(400).json({ error: 'URL is required' });
     }
@@ -34,36 +33,76 @@ app.post('/fetch', async (req, res) => {
     const $ = cheerio.load(html);
 
     // Process text nodes in the body
-    $('body *').contents().filter(function() {
-      return this.nodeType === 3; // Text nodes only
-    }).each(function() {
-      // Replace text content but not in URLs or attributes
-      const text = $(this).text();
-      const newText = replaceYaleWithFale(text);
-      if (text !== newText) {
-        $(this).replaceWith(newText);
-      }
-    });
+    $('body *')
+      .contents()
+      .filter(function() {
+        return this.nodeType === 3; // Text nodes only
+      })
+      .each(function() {
+        // Replace text content but not in URLs or attributes
+        const text = $(this).text();
+        const newText = replaceYaleWithFale(text);
+        if (text !== newText) {
+          $(this).replaceWith(newText);
+        }
+      });
 
     // Process title separately
     const title = replaceYaleWithFale($('title').text());
     $('title').text(title);
-    
-    return res.json({ 
-      success: true, 
+
+    return res.json({
+      success: true,
       content: $.html(),
       title: title,
-      originalUrl: url
+      originalUrl: url,
     });
   } catch (error) {
     console.error('Error fetching URL:', error.message);
-    return res.status(500).json({ 
-      error: `Failed to fetch content: ${error.message}` 
+    return res.status(500).json({
+      error: `Failed to fetch content: ${error.message}`,
     });
   }
 });
 
-// Start the server
-app.listen(PORT, () => {
-  console.log(`Faleproxy server running at http://localhost:${PORT}`);
-});
+function startServer(port = process.env.PORT || 3001) {
+  return new Promise((resolve, reject) => {
+    const server = app
+      .listen(port, () => {
+        console.log(`Faleproxy server running at http://localhost:${port}`);
+        resolve(server);
+      })
+      .on('error', (error) => {
+        reject(error);
+      });
+  });
+}
+
+function stopServer(server) {
+  return new Promise((resolve, reject) => {
+    if (!server) {
+      resolve();
+      return;
+    }
+    server.close((error) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve();
+    });
+  });
+}
+
+if (require.main === module) {
+  startServer().catch((error) => {
+    console.error('Failed to start server:', error);
+    process.exitCode = 1;
+  });
+}
+
+module.exports = {
+  app,
+  startServer,
+  stopServer,
+};
