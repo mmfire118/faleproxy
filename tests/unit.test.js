@@ -114,4 +114,14 @@ describe('Yale to Fale replacement logic', () => {
     
     expect(modifiedHtml).toContain('FALE University, Fale College, and fale medical school');
   });
+
+  test('replaceYaleWithFale should return original value for non-string input', () => {
+    expect(replaceYaleWithFale(null)).toBeNull();
+    expect(replaceYaleWithFale(undefined)).toBeUndefined();
+    expect(replaceYaleWithFale(42)).toBe(42);
+  });
+
+  test('replaceYaleWithFale should preserve character casing for matches', () => {
+    expect(replaceYaleWithFale('Yale YALE yale')).toBe('Fale FALE fale');
+  });
 });
