@@ -70,7 +70,8 @@ jobs:
         echo "preview_url=$preview_url" >> $GITHUB_OUTPUT
 
     - name: Share preview URL
-      run: echo "Preview URL: ${{ steps.deploy-preview.outputs.preview_url }}" >> $GITHUB_STEP_SUMMARY
+      run: |
+        echo "Preview URL: ${{ steps.deploy-preview.outputs.preview_url }}" >> $GITHUB_STEP_SUMMARY
 
   deploy:
     needs: test
